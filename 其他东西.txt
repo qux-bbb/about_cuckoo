@@ -1,0 +1,4 @@
+cuckoo submit test.exe --machine win7_x64
+--machine 指的是label
+
+win10并不能用，很简单的Hello World都会崩

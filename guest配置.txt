@@ -1,0 +1,11 @@
+virtualbox win7_x64
+安装增强工具
+设置分辨率：文件浏览器输入该地址 控制面板\外观和个性化\显示\屏幕分辨率，只要不是800x600就行
+确认当前用户为管理员权限：控制面板\用户帐户和家庭安全\用户帐户\管理帐户\更改帐户，如果不是，改成管理员就好了
+设置ip为静态ip：控制面板\网络和 Internet\网络和共享中心，本地连接->属性->IPv4->属性， 如 IP地址为192.168.56.101，子网掩码为255.255.255.0，默认网关为192.168.56.1 DNS服务器为114.114.114.114
+关闭Firewall：控制面板\系统和安全\Windows 防火墙\自定义设置，全部选择关闭即可
+禁用自动更新：控制面板\系统和安全\Windows Update\更改设置，重要更新 设置为 从不检查更新，推荐更新 勾选 同重要更新
+关闭UAC：控制面板\用户帐户和家庭安全\用户帐户，更改用户账户控制设置，设置为 从不通知
+在服务中做相应设置：右键停止相应服务，右键 属性，设置 启动类型 为 禁用，需要设置的服务有：Windows Defender/Windows Firewall/Windows Update
+安装python2.7.18，安装pillow（pip install pillow，会安装pillow6.2.2，这是最后支持python2.7的版本）
+安装agent.py，复制$CWD/agent/agent.py 到 虚机，改名为 agent.pyw，移动到C:\Users\hello\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup文件夹

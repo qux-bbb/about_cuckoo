@@ -1,0 +1,163 @@
+我的系统信息
+$ cat /etc/issue
+Ubuntu 20.04.1 LTS \n \l
+$ uname -a
+Linux mbuntu 5.4.0-58-generic #64-Ubuntu SMP Wed Dec 9 08:16:25 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+
+cuckoo 2.0.7 不支持python3，这里用了python2.7.18
+安装python和依赖库
+sudo apt-get install python python-pip python-dev libffi-dev libssl-dev
+sudo apt-get install python-virtualenv python-setuptools
+sudo apt-get install libjpeg-dev zlib1g-dev swig
+# python-pip 需要用setuptools从源码编译安装，virtualenv可以用pip安装
+
+安装mongoDB以使用网页接口
+sudo apt-get install mongodb
+
+安装PostgreSQL以使用该数据库
+sudo apt-get install postgresql libpq-dev
+
+安装yara
+# 安装依赖
+sudo apt-get install automake libtool make gcc
+sudo apt-get install flex bison
+sudo apt-get install libjansson-dev
+# 下载解压，版本可能变化
+wget https://github.com/VirusTotal/yara/archive/v4.0.2.tar.gz
+tar -zxvf v4.0.2.tar.gz
+# 编译安装
+cd yara-4.0.2
+./bootstrap.sh
+./configure --enable-cuckoo
+make
+sudo make install
+# 检查
+make check
+
+安装pydeep
+# 安装依赖
+sudo apt install libfuzzy-dev
+# ssdeep下载解压，版本可能变化
+wget https://github.com/ssdeep-project/ssdeep/releases/download/release-2.14.1/ssdeep-2.14.1.tar.gz
+tar -zxvf ssdeep-2.14.1.tar.gz
+# 编译安装
+cd ssdeep-2.14.1
+./configure
+make
+sudo make install
+sudo ldconfig
+cd ../
+# pydeep下载解压
+wget https://github.com/kbandla/pydeep/archive/0.2.tar.gz
+tar -zxvf 0.2.tar.gz
+# 编译安装
+cd pydeep-0.2
+python setup.py build
+sudo python setup.py install
+
+安装virtualbox(ubuntu20 看deb包的名字应该是eoan)
+echo deb http://download.virtualbox.org/virtualbox/debian eoan contrib | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+cd /etc/apt/trusted.gpg.d
+sudo wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
+sudo apt-get update
+sudo apt-get install virtualbox-6.1 (出问题试试不要指定版本)
+主机->管理->主机网络管理器->创建，然后取消勾选"DHCP"
+把用户加到vboxusers组
+sudo usermod -a -G vboxusers hello
+
+安装mitmproxy
+wget https://snapshots.mitmproxy.org/6.0.0/mitmproxy-6.0.0-linux.tar.gz
+tar -zxvf mitmproxy-6.0.0-linux.tar.gz
+sudo ln -s /home/hello/for_cuckoo/mitmdump /usr/local/bin/mitmdump
+sudo ln -s /home/hello/for_cuckoo/mitmproxy /usr/local/bin/mitmproxy
+sudo ln -s /home/hello/for_cuckoo/mitmweb /usr/local/bin/mitmweb
+可以简单运行一下mitmproxy（直接执行命令：mitmproxy），使其生成证书（~/.mitmproxy文件夹下），然后Ctrl+C退出
+
+安装tcpdump
+sudo apt-get install tcpdump apparmor-utils
+sudo aa-disable /usr/sbin/tcpdump
+# 设置不需要管理员权限启动tcpdump
+sudo groupadd pcap
+sudo usermod -a -G pcap hello
+sudo chgrp pcap /usr/sbin/tcpdump
+# 安装setcap
+sudo apt-get install libcap2-bin
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+# 确认结果
+getcap /usr/sbin/tcpdump
+
+安装volatility
+wget http://downloads.volatilityfoundation.org/releases/2.6/volatility_2.6_lin64_standalone.zip
+unzip volatility_2.6_lin64_standalone.zip 
+cd volatility_2.6_lin64_standalone/
+sudo ln -s /home/hello/for_cuckoo/volatility_2.6_lin64_standalone/volatility_2.6_lin64_standalone /usr/local/bin/volatility
+
+安装M2Crypto(这里装的是0.37.1版本)
+sudo apt-get install swig
+pip install m2crypto
+
+安装guacd(缺少包) // &&&&&&&
+sudo apt install libguac-client-rdp0 libguac-client-vnc0 libguac-client-ssh0 guacd
+
+手动安装（configure出错，提示缺少libpng） // &&&&&&&
+sudo apt install libcairo2-dev 	libjpeg62-turbo-dev libpng-dev libtool-bin libossp-uuid-dev freerdp2-dev
+mkdir /tmp/guac-build && cd /tmp/guac-build
+wget https://downloads.apache.org/guacamole/1.2.0/source/guacamole-server-1.2.0.tar.gz
+tar -zxvf guacamole-server-1.2.0.tar.gz && cd guacamole-server-1.2.0
+./configure --with-init-dir=/etc/init.d
+make && sudo make install && cd ..
+sudo ldconfig
+sudo /etc/init.d/guacd start
+
+在虚拟环境下安装cuckoo
+$ virtualenv venv
+$ . venv/bin/activate
+(venv)$ pip install -U pip setuptools
+(venv)$ pip install -U cuckoo
+执行一下cuckoo，生成初始的cwd：cuckoo
+复制mitmproxy证书到hello对应路径下：
+cp /home/hello/.mitmproxy/mitmproxy-ca-cert.p12 /home/hello/.cuckoo/analyzer/windows/bin/cert.p12
+
+先通过iptables简单设置一下网络，运行iptables_set.sh即可
+注意 -o 指定的网卡是上网网卡
+应该需要调整一下，限制对内网的访问，去掉同网段间可访问的规则
+
+设置mysql
+# 安装mysql
+sudo apt install mysql-server mysql-client libmysqlclient-dev
+# mysql默认用户root密码为空
+sudo mysql -uroot -p
+执行SQL语句：
+# 这里版本信息是：mysql  Ver 8.0.22-0ubuntu0.20.04.3 for Linux on x86_64 ((Ubuntu))
+# 因为mysql 版本更新，不能用这条命令了：GRANT all ON cuckoo.* TO 'your_name'@'localhost' identified by 'your_pass';
+# 拆成2条命令代替
+CREATE DATABASE IF NOT EXISTS cuckoo default charset utf8 COLLATE utf8_general_ci;
+create user 'your_name'@'localhost' identified by 'your_pass';
+grant all privileges on cuckoo.* to 'your_name'@'localhost';
+在cuckoo.conf里需要设置：connection = mysql://your_name:your_pass@localhost/cuckoo?charset=utf8
+还需要pip安装一个包：pip install mysql-python，如果出现my_config.h不存在错误，执行以下命令后重新pip安装mysql-python:
+sudo wget https://raw.githubusercontent.com/paulfitz/mysql-connector-c/master/include/my_config.h -P /usr/include/mysql/
+
+系统重启后，virtualbox无法自动启动相应虚拟网卡，使用如下命令配置：
+# If the hostonly interface vboxnet0 does not exist already.
+VBoxManage hostonlyif create
+# Configure vboxnet0.
+VBoxManage hostonlyif ipconfig vboxnet0 --ip 192.168.56.1 --netmask 255.255.255.0
+
+安装使用inetsim
+# 建一个ubuntu虚机，做如下操作
+su
+echo "deb http://www.inetsim.org/debian/ binary/" > /etc/apt/sources.list.d/inetsim.list
+wget -O - http://www.inetsim.org/inetsim-archive-signing-key.asc | apt-key add -
+apt update
+apt install inetsim
+
+## nfqueue-bindings 没安装成功，遇到问题再说（&&&&&&&）
+# sudo apt install cmake
+# sudo apt install libnetfilter-queue-dev
+# sudo apt install swig
+# wget https://github.com/chifflier/nfqueue-bindings/archive/v0.6.tar.gz
+
+# 设置网络：192.168.56.103/255.255.255 网关：192.168.56.1
+# 将/etc/inetsim/inetsim.conf备份，并对原文件做修改，启动inetsim
+inetsim --conf /etc/inetsim/inetsim.conf
