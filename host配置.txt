@@ -162,3 +162,6 @@ apt install inetsim
 # 将/etc/inetsim/inetsim.conf备份，并对原文件做修改，启动inetsim
 inetsim --conf /etc/inetsim/inetsim.conf
 # 我做的改动：将service_bind_address和dns_default_ip取消注释，值改成本机ip
+
+启动rooter的命令
+cuckoo rooter -g hello --sudo
