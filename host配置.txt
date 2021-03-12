@@ -1,15 +1,16 @@
 我的系统信息
 $ cat /etc/issue
-Ubuntu 20.04.1 LTS \n \l
+Ubuntu 20.04.2 LTS \n \l
 $ uname -a
-Linux mbuntu 5.4.0-58-generic #64-Ubuntu SMP Wed Dec 9 08:16:25 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+Linux helloserver 5.4.0-66-generic #74-Ubuntu SMP Wed Jan 27 22:54:38 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
 
 cuckoo 2.0.7 不支持python3，这里用了python2.7.18
 安装python和依赖库
-sudo apt-get install python python-pip python-dev libffi-dev libssl-dev
-sudo apt-get install python-virtualenv python-setuptools
+sudo apt-get install python python-dev libffi-dev libssl-dev
+sudo apt-get install python-setuptools
 sudo apt-get install libjpeg-dev zlib1g-dev swig
-# python-pip 需要用setuptools从源码编译安装，virtualenv可以用pip安装
+wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && sudo python get-pip.py
+sudo pip install virtualenv
 
 安装mongoDB以使用网页接口
 sudo apt-get install mongodb
@@ -23,10 +24,10 @@ sudo apt-get install automake libtool make gcc
 sudo apt-get install flex bison
 sudo apt-get install libjansson-dev
 # 下载解压，版本可能变化
-wget https://github.com/VirusTotal/yara/archive/v4.0.2.tar.gz
-tar -zxvf v4.0.2.tar.gz
+wget https://github.com/VirusTotal/yara/archive/v4.0.5.tar.gz
+tar -zxvf v4.0.5.tar.gz
 # 编译安装
-cd yara-4.0.2
+cd yara-4.0.5
 ./bootstrap.sh
 ./configure --enable-cuckoo
 make
@@ -36,7 +37,7 @@ make check
 
 安装pydeep
 # 安装依赖
-sudo apt install libfuzzy-dev
+sudo apt install libfuzzy-dev g++
 # ssdeep下载解压，版本可能变化
 wget https://github.com/ssdeep-project/ssdeep/releases/download/release-2.14.1/ssdeep-2.14.1.tar.gz
 tar -zxvf ssdeep-2.14.1.tar.gz
@@ -55,19 +56,9 @@ cd pydeep-0.2
 python setup.py build
 sudo python setup.py install
 
-安装virtualbox(ubuntu20 看deb包的名字应该是eoan)
-echo deb http://download.virtualbox.org/virtualbox/debian eoan contrib | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
-cd /etc/apt/trusted.gpg.d
-sudo wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
-sudo apt-get update
-sudo apt-get install virtualbox-6.1 (出问题试试不要指定版本)
-主机->管理->主机网络管理器->创建，然后取消勾选"DHCP"
-把用户加到vboxusers组
-sudo usermod -a -G vboxusers hello
-
 安装mitmproxy
-wget https://snapshots.mitmproxy.org/6.0.0/mitmproxy-6.0.0-linux.tar.gz
-tar -zxvf mitmproxy-6.0.0-linux.tar.gz
+wget https://snapshots.mitmproxy.org/6.0.2/mitmproxy-6.0.2-linux.tar.gz
+tar -zxvf mitmproxy-6.0.2-linux.tar.gz
 sudo ln -s /home/hello/for_cuckoo/mitmdump /usr/local/bin/mitmdump
 sudo ln -s /home/hello/for_cuckoo/mitmproxy /usr/local/bin/mitmproxy
 sudo ln -s /home/hello/for_cuckoo/mitmweb /usr/local/bin/mitmweb
@@ -87,6 +78,7 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
 getcap /usr/sbin/tcpdump
 
 安装volatility
+sudo apt install unzip
 wget http://downloads.volatilityfoundation.org/releases/2.6/volatility_2.6_lin64_standalone.zip
 unzip volatility_2.6_lin64_standalone.zip 
 cd volatility_2.6_lin64_standalone/
@@ -110,17 +102,14 @@ sudo ldconfig
 sudo /etc/init.d/guacd start
 
 在虚拟环境下安装cuckoo
-$ virtualenv venv
-$ . venv/bin/activate
-(venv)$ pip install -U pip setuptools
-(venv)$ pip install -U cuckoo
-执行一下cuckoo，生成初始的cwd：cuckoo
-复制mitmproxy证书到hello对应路径下：
+virtualenv venv
+. venv/bin/activate
+pip install -U pip setuptools
+pip install -U cuckoo  # 这里可能有一些包的新版本已经只支持python3所以会出错，可以手动安装符合条件的最小版本的包，如: pip install pyrsistent==0.14.0
+# 执行一下cuckoo，生成初始的cwd：cuckoo
+cuckoo
+# 复制mitmproxy证书到hello对应路径下：
 cp /home/hello/.mitmproxy/mitmproxy-ca-cert.p12 /home/hello/.cuckoo/analyzer/windows/bin/cert.p12
-
-先通过iptables简单设置一下网络，运行iptables_set.sh即可
-注意 -o 指定的网卡是上网网卡
-应该需要调整一下，限制对内网的访问，去掉同网段间可访问的规则
 
 设置mysql
 # 安装mysql
@@ -138,11 +127,26 @@ grant all privileges on cuckoo.* to 'your_name'@'localhost';
 还需要pip安装一个包：pip install mysql-python，如果出现my_config.h不存在错误，执行以下命令后重新pip安装mysql-python:
 sudo wget https://raw.githubusercontent.com/paulfitz/mysql-connector-c/master/include/my_config.h -P /usr/include/mysql/
 
+安装virtualbox(ubuntu20 看deb包的名字应该是eoan)
+echo deb http://download.virtualbox.org/virtualbox/debian eoan contrib | sudo tee -a /etc/apt/sources.list.d/virtualbox.list
+cd /etc/apt/trusted.gpg.d
+sudo wget https://www.virtualbox.org/download/oracle_vbox_2016.asc
+sudo apt-get update
+sudo apt-get install virtualbox-6.1 (出问题试试不要指定版本)
+启动virtualbox: virtualbox (如果不行，按提示安装其它包，我这里提示安装virtualbox-qt)
+主机->管理->主机网络管理器->创建，然后取消勾选"DHCP"
+把用户加到vboxusers组
+sudo usermod -a -G vboxusers hello
+
 系统重启后，virtualbox无法自动启动相应虚拟网卡，使用如下命令配置：
 # If the hostonly interface vboxnet0 does not exist already.
 VBoxManage hostonlyif create
 # Configure vboxnet0.
 VBoxManage hostonlyif ipconfig vboxnet0 --ip 192.168.56.1 --netmask 255.255.255.0
+
+通过iptables简单设置一下网络，运行iptables_set.sh即可
+注意 -o 指定的网卡是上网网卡
+在示例基础上调整了一下：限制对内网的访问，去掉同网段间可访问的规则
 
 安装使用inetsim
 # 建一个ubuntu虚机，做如下操作

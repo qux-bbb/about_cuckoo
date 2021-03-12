@@ -1,8 +1,10 @@
+net_card="wlp5s0"
+
 # clear iptables
 sudo iptables -t nat -F
 sudo iptables -F
 
-sudo iptables -t nat -A POSTROUTING -o wlp5s0 -s 192.168.56.0/24 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -o $net_card -s 192.168.56.0/24 -j MASQUERADE
 
 # Default drop.
 sudo iptables -P FORWARD DROP
@@ -25,6 +27,5 @@ echo 1 | sudo tee -a /proc/sys/net/ipv4/ip_forward
 sudo sysctl -w net.ipv4.ip_forward=1
 
 
-# create and onfigure vboxnet0.
-VBoxManage hostonlyif create
+# configure vboxnet0.
 VBoxManage hostonlyif ipconfig vboxnet0 --ip 192.168.56.1 --netmask 255.255.255.0
