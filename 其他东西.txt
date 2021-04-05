@@ -1,4 +1,15 @@
 cuckoo submit test.exe --machine win7_x64
 --machine 指的是label
 
+cuckoo --cwd ~/.cuckoo
+--cwd可以指定`Cuckoo Working Directory`，如果跟一个空文件夹，会初始化一个新的CWD
+详情见: https://cuckoo.sh/docs/installation/host/cwd.html
+
+supervisord -c ~/.cuckoo/supervisord.conf
+简单的方式启动沙箱，可以自己修改启动内容，要先自己装一下supervisor: `sudo apt install supervisor`  
+详情见: https://cuckoo.sh/docs/usage/start.html#cuckoo-in-the-background
+
+指定组启动
+supervisorctl -c /home/hello/.cuckoo/supervisord.conf start cuckoo:
+
 win10并不能用，很简单的Hello World都会崩
