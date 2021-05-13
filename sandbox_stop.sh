@@ -1,8 +1,8 @@
-PWD=/home/hello/.cuckoo
+CWD=/home/hello/.cuckoo
 
-source /home/hello/for_cuckoo/venv/bin/activate
+supervisorctl -c ${CWD}/supervisord.conf stop all
+supervisorctl -c ${CWD}/supervisord.conf shutdown
 
-supervisorctl -c ${PWD}/supervisord.conf stop all
-supervisorctl -c ${PWD}/supervisord.conf shutdown
-
-deactivate
+sudo service nginx stop
+sudo service uwsgi stop cuckoo-web
+sudo service uwsgi stop cuckoo-api
