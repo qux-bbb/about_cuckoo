@@ -13,3 +13,12 @@ supervisord -c ~/.cuckoo/supervisord.conf
 supervisorctl -c /home/hello/.cuckoo/supervisord.conf start cuckoo:
 
 win10并不能用，很简单的Hello World都会崩
+
+执行命令`cuckoo web`出现错误：  
+`AttributeError: 'Request' object has no attribute 'is_xhr'`  
+原因是werkzeug库的新版没有这个属性了，卸载之后重新安装低版本库  
+```bash
+pip uninstall werkzeug
+pip install werkzeug==0.16.1
+```
+原链接: https://stackoverflow.com/questions/60992849/attributeerror-request-object-has-no-attribute-is-xhr  
